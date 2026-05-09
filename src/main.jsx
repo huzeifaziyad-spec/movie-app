@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MovieDetail from "./pages/MovieDetail";
+import PersonDetail from "./pages/PersonDetail";
 
 const router = createBrowserRouter([
   {
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
   {
     path: "/movie/:id",
     element: <MovieDetail />,
+  },
+  {
+    path: "/person/:id",
+    element: <PersonDetail />,
   },
 ]);
 

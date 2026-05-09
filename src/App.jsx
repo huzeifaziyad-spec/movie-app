@@ -5,16 +5,16 @@ import MovieCards from "./components/MovieCards";
 import { useDebounce } from "react-use";
 import { updateSearchCount, getTrendingMovies } from "./appwrite.js";
 import { Link } from "react-router-dom";
+import HeroSlider from "./components/HeroSlider";
+import Categories from "./components/Categories";
+
+const genreMap = {
+  "Action": 28, "Adventure": 12, "Animation": 16, "Biography": 1, "Crime": 80, "Comedy": 35, "Documentary": 99, "Drama": 18, "Family": 10751, "Fantasy": 14, "History": 36, "Horror": 27, "Music": 10402, "Mystery": 9648, "Romance": 10749, "Science Fiction": 878, "TV Movie": 10770, "Thriller": 53, "War": 10752, "Western": 37
+};
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-const API_OPTIONS = {
-  method: "GET",
-  headers: {
-    accept: "application/json",
-    Authorization: `Bearer ${API_KEY}`,
-  },
-};
+
 const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -22,6 +22,7 @@ const App = () => {
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [newestMovies, setNewestMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState("Action");
   // Create a debounced version of searchTerm.
   // It updates 500ms after the user stops typing
   // to prevent making too many API requests.
@@ -29,15 +30,21 @@ const App = () => {
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 1000, [searchTerm]);
 
-  const fetchMovies = async (query = "") => {
+  const fetchMovies = async (query = "", genre = "") => {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const endpoint = query
-        ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
-        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
-      const response = await fetch(endpoint, API_OPTIONS);
+      let endpoint = "";
+      if (query) {
+        endpoint = `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}&api_key=${API_KEY}`;
+      } else if (genre && genreMap[genre]) {
+        endpoint = `${API_BASE_URL}/discover/movie?with_genres=${genreMap[genre]}&sort_by=popularity.desc&api_key=${API_KEY}`;
+      } else {
+        endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc&api_key=${API_KEY}`;
+      }
+
+      const response = await fetch(endpoint);
 
       if (!response.ok) {
         throw new Error("Error Fetching the movies");
@@ -75,22 +82,20 @@ const App = () => {
 
   const fetchNewestMovies = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/movie/now_playing?language=en-US&page=1`, API_OPTIONS);
+      const response = await fetch(`${API_BASE_URL}/movie/now_playing?language=en-US&page=1&api_key=${API_KEY}`);
       const data = await response.json();
       if (data.results && data.results.length > 0) {
-        setNewestMovies(data.results.slice(0, 3)); // only first 3 movies
+        setNewestMovies(data.results.slice(0, 6)); // top 6 for slider
       }
     } catch (error) {
       console.log("Error fetching newest movies:", error);
     }
   };
 
-  // This effect runs whenever the debouncedSearchTerm changes.
-  // It calls fetchMovies to get updated movie results
-  // after the user stops typing (debounced value).
+  // This effect runs whenever the debouncedSearchTerm or selectedGenre changes.
   useEffect(() => {
-    fetchMovies(debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    fetchMovies(debouncedSearchTerm, selectedGenre);
+  }, [debouncedSearchTerm, selectedGenre]);
 
   useEffect(() => {
     loadTrendingMovies();
@@ -102,48 +107,28 @@ const App = () => {
 
   return (
     <main>
-      <div className="pattern" />
-      <div className="wrapper">
-        <header>
-          {newestMovies.length > 0 ? (
-            <div className="flex gap-5 w-full max-w-lg mx-auto mb-10 justify-center">
-              {newestMovies.map((movie) => (
-                <Link
-                  key={movie.id}
-                  to={`/movie/${movie.id}`}
-                  className="relative group overflow-hidden rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105 cursor-pointer flex-1"
-                >
-                  <img
-                    src={
-                      movie.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                        : "/no-movie.png"
-                    }
-                    alt={movie.title}
-                    className="w-full h-auto object-cover"
-                  />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <img  />
-          )}
-          <h1 className="mt-8">
-            Find <span className="text-boxed">Movies</span> you'll enjoy
-            without the Hassle
-          </h1>
+      <HeroSlider movies={newestMovies} />
 
-          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-        </header>
+      <div className="wrapper">
+
+        <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+
+        <Categories
+          selectedGenre={selectedGenre}
+          onGenreChange={(genre) => {
+            setSelectedGenre(genre);
+            setSearchTerm("");
+          }}
+        />
         {/* passing trending movie */}
         {trendingMovies.length > 0 && (
           <section className="trending">
-            <h2 className="">Trending Movies</h2>
+            <h2 className="mb-8">Trending Movies</h2>
             <ul>
               {trendingMovies.map((movie, index) => (
                 <li key={movie.$id}>
                   <Link to={`/movie/${movie.movie_id}`} className="flex flex-row items-center">
-                    <p>{index + 1}</p>
+                    <p className="fancy-text">{index + 1}</p>
                     <img src={movie.poster_url} alt={movie.title} />
                   </Link>
                 </li>
@@ -153,7 +138,6 @@ const App = () => {
         )}
 
         <section className="all-movies">
-          <h2 className="">All Movies</h2>
           {isLoading ? (
             <Spinner />
           ) : errorMessage ? (

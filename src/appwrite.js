@@ -32,7 +32,7 @@ export const updateSearchCount = async (searchTerm, movie) => {
           count: doc.count + 1,
         }
       );
-    } 
+    }
     // 3. If it does NOT exist → create new document
     else {
       await database.createDocument(
@@ -58,7 +58,7 @@ export const getTrendingMovies = async () => {
       DATABASE_ID,
       COLLECTION_ID,
       [Query.limit(5),
-       Query.orderDesc("count"),
+      Query.orderDesc("count"),
       ],
     );
     return result.documents;

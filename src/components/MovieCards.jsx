@@ -5,7 +5,7 @@ const MovieCards = ({
 }) => {
   return (
     <Link to={`/movie/${id}`}>
-      <div className="movie-card hover:scale-105 transition-transform duration-300 cursor-pointer">
+      <div className="movie-card transition-all duration-300">
         <img
           src={
             poster_path
@@ -13,13 +13,12 @@ const MovieCards = ({
               : "/assets/no-poster.png"
           }
           alt={title}
-          className="rounded-lg shadow-md"
         />
-        <h3 className="mt-2 font-semibold">{title}</h3>
-        <div className="content flex justify-between items-center text-sm mt-1">
-          <div className="rating flex items-center gap-1">
-            <img src="/assets/star.svg" alt="Star" className="w-4 h-4" />
-            <span>{vote_average ? vote_average.toFixed(1) : "N/A"}</span>
+        <h3>{title}</h3>
+        <div className="content">
+          <div className="rating">
+            <img src="/assets/star.svg" alt="Star" />
+            <p>{vote_average ? vote_average.toFixed(1) : "N/A"}</p>
           </div>
           <span>{release_date ? release_date.slice(0, 4) : "N/A"}</span>
           <span>{original_language ? original_language.toUpperCase() : "N/A"}</span>

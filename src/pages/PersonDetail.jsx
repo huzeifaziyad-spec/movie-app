@@ -61,20 +61,20 @@ const PersonDetail = () => {
   }, [id]);
 
   if (isLoading) return (
-    <div className="min-h-screen bg-[#030014] flex items-center justify-center">
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center">
       <Spinner />
     </div>
   );
 
   if (!person) return (
-    <div className="min-h-screen bg-[#030014] text-white p-10 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-[#000000] text-white p-10 flex flex-col items-center justify-center">
       <h1 className="text-2xl mb-4">Person not found</h1>
       <Link to="/" className="text-red-500 hover:underline">Go back home</Link>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#030014] text-white p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-screen bg-[#000000] text-white p-6 md:p-12 relative overflow-hidden">
       {/* Background Image */}
       {backdrop && (
         <div className="absolute top-0 left-0 w-full h-[700px] z-0">
@@ -83,7 +83,7 @@ const PersonDetail = () => {
             alt="Backdrop"
             className="w-full h-full object-cover opacity-30 grayscale blur-[2px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030014]/80 to-[#030014]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#000000]/80 to-[#000000]" />
         </div>
       )}
 

@@ -22,7 +22,8 @@ const App = () => {
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [newestMovies, setNewestMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState("Action");
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Popular");
   // Create a debounced version of searchTerm.
   // It updates 500ms after the user stops typing
   // to prevent making too many API requests.
@@ -30,14 +31,26 @@ const App = () => {
 
   useDebounce(() => setDebouncedSearchTerm(searchTerm), 1000, [searchTerm]);
 
-  const fetchMovies = async (query = "", genre = "") => {
+  const fetchMovies = async (query = "", genre = "", category = "") => {
     setIsLoading(true);
     setErrorMessage("");
+
+    if (!API_KEY) {
+      setErrorMessage("TMDB API Key is missing. Please check your environment variables.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       let endpoint = "";
       if (query) {
         endpoint = `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}&api_key=${API_KEY}`;
+      } else if (category === "Popular") {
+        endpoint = `${API_BASE_URL}/movie/popular?api_key=${API_KEY}`;
+      } else if (category === "Premieres") {
+        endpoint = `${API_BASE_URL}/movie/upcoming?api_key=${API_KEY}`;
+      } else if (category === "Recently Added") {
+        endpoint = `${API_BASE_URL}/movie/now_playing?api_key=${API_KEY}`;
       } else if (genre && genreMap[genre]) {
         endpoint = `${API_BASE_URL}/discover/movie?with_genres=${genreMap[genre]}&sort_by=popularity.desc&api_key=${API_KEY}`;
       } else {
@@ -47,25 +60,19 @@ const App = () => {
       const response = await fetch(endpoint);
 
       if (!response.ok) {
-        throw new Error("Error Fetching the movies");
+        const errorData = await response.json();
+        throw new Error(errorData.status_message || "Error Fetching the movies");
       }
       const data = await response.json();
-
-      if (data.Response === "False") {
-        setErrorMessage(data.Error || "No movies found");
-        setMovieList([]);
-        return;
-      }
 
       setMovieList(data.results || []);
 
       if (query && data.results.length > 0) {
         await updateSearchCount(query, data.results[0]);
       }
-
-      setErrorMessage("");
     } catch (error) {
-      console.log(`Error Fetching the movies: ${error}`);
+      console.error(`Error Fetching the movies: ${error}`);
+      setErrorMessage(error.message || "Failed to load movies. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +99,10 @@ const App = () => {
     }
   };
 
-  // This effect runs whenever the debouncedSearchTerm or selectedGenre changes.
+  // This effect runs whenever the debouncedSearchTerm, selectedGenre or selectedCategory changes.
   useEffect(() => {
-    fetchMovies(debouncedSearchTerm, selectedGenre);
-  }, [debouncedSearchTerm, selectedGenre]);
+    fetchMovies(debouncedSearchTerm, selectedGenre, selectedCategory);
+  }, [debouncedSearchTerm, selectedGenre, selectedCategory]);
 
   useEffect(() => {
     loadTrendingMovies();
@@ -110,6 +117,20 @@ const App = () => {
       <HeroSlider movies={newestMovies} />
 
       <div className="wrapper">
+        <header className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <span className="text-white font-black text-2xl italic">M</span>
+            </div>
+            <h1 className="!text-left !mx-0 !text-3xl tracking-tighter hidden sm:block">MovieBox</h1>
+          </div>
+          <Link to="/watchlist" className="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all group">
+            <svg className="w-5 h-5 text-orange-500 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+            </svg>
+            <span className="font-bold text-sm text-white">My Watchlist</span>
+          </Link>
+        </header>
 
         <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
@@ -117,6 +138,13 @@ const App = () => {
           selectedGenre={selectedGenre}
           onGenreChange={(genre) => {
             setSelectedGenre(genre);
+            setSelectedCategory("");
+            setSearchTerm("");
+          }}
+          selectedCategory={selectedCategory}
+          onCategoryChange={(category) => {
+            setSelectedCategory(category);
+            setSelectedGenre("");
             setSearchTerm("");
           }}
         />

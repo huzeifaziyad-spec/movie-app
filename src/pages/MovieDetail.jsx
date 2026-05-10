@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MovieCards from "../components/MovieCards";
+import { addToWatchlist, removeFromWatchlist, checkIfInWatchlist } from "../appwrite";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -11,19 +12,33 @@ const MovieDetail = () => {
   const [cast, setCast] = useState([]);
   const [relatedMovies, setRelatedMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
 
   useEffect(() => {
     const fetchMovieDetails = async () => {
+      setIsLoading(true);
+      if (!API_KEY) {
+        console.error("TMDB API Key is missing");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // Fetch movie details
         const res = await fetch(`${API_BASE_URL}/movie/${id}?language=en-US&api_key=${API_KEY}`);
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.status_message || "Failed to fetch movie details");
+        }
+        
         const data = await res.json();
         setMovie(data);
 
         // Fetch cast
         const castRes = await fetch(`${API_BASE_URL}/movie/${id}/credits?api_key=${API_KEY}`);
-        const castData = await castRes.json();
-        const topCast = castData.cast.slice(0, 12); // first 12 cast members
+        const castData = await castRes.ok ? await castRes.json() : { cast: [] };
+        const topCast = (castData.cast || []).slice(0, 12);
 
         const castWithCounts = await Promise.all(
           topCast.map(async (actor) => {
@@ -41,18 +56,38 @@ const MovieDetail = () => {
 
         // Fetch related movies
         const relatedRes = await fetch(`${API_BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}`);
-        const relatedData = await relatedRes.json();
+        const relatedData = await relatedRes.ok ? await relatedRes.json() : { results: [] };
         setRelatedMovies(relatedData.results || []);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching movie details:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
+    const checkWatchlistStatus = async () => {
+      const status = await checkIfInWatchlist(id);
+      setIsInWatchlist(status);
+    };
+
     fetchMovieDetails();
+    checkWatchlistStatus();
     window.scrollTo(0, 0);
   }, [id]);
+
+  const toggleWatchlist = async () => {
+    try {
+      if (isInWatchlist) {
+        await removeFromWatchlist(movie.id);
+        setIsInWatchlist(false);
+      } else {
+        await addToWatchlist(movie);
+        setIsInWatchlist(true);
+      }
+    } catch (error) {
+      console.error("Failed to toggle watchlist:", error);
+    }
+  };
 
   if (isLoading) return <p>Loading...</p>;
   if (!movie) return <p>Movie not found</p>;
@@ -67,7 +102,7 @@ const MovieDetail = () => {
             alt="Backdrop"
             className="w-full h-full object-cover opacity-60 mask-image-b"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030014]/50 to-[#030014]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[black]/50 to-[black]" />
           <div className="absolute bottom-0 left-0 w-full h-32 backdrop-blur-md" />
         </div>
       )}
@@ -108,13 +143,22 @@ const MovieDetail = () => {
             </button>
 
             <button
-              onClick={() => alert("Added to watchlist!")}
-              className="bg-transparent border border-gray-600 hover:bg-white/10 text-white px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-colors"
+              onClick={toggleWatchlist}
+              className={`px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-all duration-300 ${isInWatchlist
+                  ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
+                  : 'bg-transparent border border-gray-600 hover:bg-white/10 text-white'
+                }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Watchlist
+              {isInWatchlist ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              )}
+              {isInWatchlist ? "In Watchlist" : "Watchlist"}
             </button>
 
             <a

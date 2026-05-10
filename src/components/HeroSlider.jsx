@@ -32,7 +32,7 @@ const HeroSlider = ({ movies }) => {
   const activeMovie = movies[activeIndex];
 
   return (
-    <div className="relative w-full h-[90vh] min-h-[600px] bg-[#030014] overflow-hidden mb-12">
+    <div className="relative w-full h-[90vh] min-h-[600px] bg-[#000000] overflow-hidden mb-12">
 
       {/* Dynamic Background with Fade & Blur */}
       <AnimatePresence mode="wait">
@@ -50,10 +50,10 @@ const HeroSlider = ({ movies }) => {
             className={`w-full h-full object-cover transition-all duration-1000 ${isExpanded ? 'opacity-80 scale-105' : 'opacity-100'}`}
           />
           {/* Smooth bottom gradient blend */}
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#030014] to-transparent z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent z-10" />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#030014]/80 via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#030014]/90 via-[#030014]/40 to-transparent w-full md:w-3/4" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent w-full md:w-3/4" />
         </motion.div>
       </AnimatePresence>
 
@@ -166,7 +166,7 @@ const HeroSlider = ({ movies }) => {
               onClick={() => setActiveIndex(prev => (prev - 1 + movies.length) % movies.length)}
               className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-all backdrop-blur-md hover:scale-110 active:scale-95"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
               </svg>
             </button>
@@ -174,7 +174,7 @@ const HeroSlider = ({ movies }) => {
               onClick={() => setActiveIndex(prev => (prev + 1) % movies.length)}
               className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-all backdrop-blur-md hover:scale-110 active:scale-95"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </button>

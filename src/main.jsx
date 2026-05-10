@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MovieDetail from "./pages/MovieDetail";
 import PersonDetail from "./pages/PersonDetail";
+import Watchlist from "./pages/Watchlist";
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
   {
     path: "/person/:id",
     element: <PersonDetail />,
+  },
+  {
+    path: "/watchlist",
+    element: <Watchlist />,
   },
 ]);
 

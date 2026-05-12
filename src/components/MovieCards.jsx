@@ -19,7 +19,7 @@ const MovieCards = ({
   const toggleWatchlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       if (isInWatchlist) {
         await removeFromWatchlist(id);

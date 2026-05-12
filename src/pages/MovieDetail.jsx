@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MovieCards from "../components/MovieCards";
+import Spinner from "../components/Spinner";
 import { addToWatchlist, removeFromWatchlist, checkIfInWatchlist } from "../appwrite";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
@@ -26,12 +27,12 @@ const MovieDetail = () => {
       try {
         // Fetch movie details
         const res = await fetch(`${API_BASE_URL}/movie/${id}?language=en-US&api_key=${API_KEY}`);
-        
+
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.status_message || "Failed to fetch movie details");
         }
-        
+
         const data = await res.json();
         setMovie(data);
 
@@ -89,7 +90,7 @@ const MovieDetail = () => {
     }
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Spinner fullPage />;
   if (!movie) return <p>Movie not found</p>;
 
   return (
@@ -145,8 +146,8 @@ const MovieDetail = () => {
             <button
               onClick={toggleWatchlist}
               className={`px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-all duration-300 ${isInWatchlist
-                  ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
-                  : 'bg-transparent border border-gray-600 hover:bg-white/10 text-white'
+                ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
+                : 'bg-transparent border border-gray-600 hover:bg-white/10 text-white'
                 }`}
             >
               {isInWatchlist ? (

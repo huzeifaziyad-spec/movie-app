@@ -60,11 +60,7 @@ const PersonDetail = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-[#000000] flex items-center justify-center">
-      <Spinner />
-    </div>
-  );
+  if (isLoading) return <Spinner fullPage />;
 
   if (!person) return (
     <div className="min-h-screen bg-[#000000] text-white p-10 flex flex-col items-center justify-center">

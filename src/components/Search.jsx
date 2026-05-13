@@ -1,6 +1,6 @@
 const Search = ({ searchTerm, setSearchTerm }) => {
   return (
-    <div className="relative w-full max-w-3xl mx-auto mt-12 group">
+    <div className="relative w-full max-w-3xl mx-auto mt-4 group">
       {/* Animated Neon Glow Backdrop */}
       <div className="absolute -inset-0.5 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-blue-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
 

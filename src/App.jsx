@@ -7,68 +7,58 @@ import { updateSearchCount, getTrendingMovies } from "./appwrite.js";
 import { Link } from "react-router-dom";
 import HeroSlider from "./components/HeroSlider";
 import Categories from "./components/Categories";
-
-const genreMap = {
-  "Action": 28, "Adventure": 12, "Animation": 16, "Biography": 1, "Crime": 80, "Comedy": 35, "Documentary": 99, "Drama": 18, "Family": 10751, "Fantasy": 14, "History": 36, "Horror": 27, "Music": 10402, "Mystery": 9648, "Romance": 10749, "Science Fiction": 878, "TV Movie": 10770, "Thriller": 53, "War": 10752, "Western": 37
-};
-
-const API_BASE_URL = "https://api.themoviedb.org/3";
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+import { fetchFromTMDB, genreMap } from "./lib/tmdb";
 
 const App = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("searchTerm") || "");
   const [errorMessage, setErrorMessage] = useState("");
   const [movieList, setMovieList] = useState([]);
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [newestMovies, setNewestMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedGenre, setSelectedGenre] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Popular");
-  // Create a debounced version of searchTerm.
-  // It updates 500ms after the user stops typing
-  // to prevent making too many API requests.
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState(() => sessionStorage.getItem("selectedGenre") || "");
+  const [selectedCategory, setSelectedCategory] = useState(() => sessionStorage.getItem("selectedCategory") || "Popular");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
-  useDebounce(() => setDebouncedSearchTerm(searchTerm), 1000, [searchTerm]);
+  useEffect(() => {
+    sessionStorage.setItem("searchTerm", searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    sessionStorage.setItem("selectedGenre", selectedGenre);
+  }, [selectedGenre]);
+
+  useEffect(() => {
+    sessionStorage.setItem("selectedCategory", selectedCategory);
+  }, [selectedCategory]);
+
+  useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
 
   const fetchMovies = async (query = "", genre = "", category = "") => {
     setIsLoading(true);
     setErrorMessage("");
 
-    if (!API_KEY) {
-      setErrorMessage("TMDB API Key is missing. Please check your environment variables.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
       let endpoint = "";
       if (query) {
-        endpoint = `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}&api_key=${API_KEY}`;
+        endpoint = `/search/movie?query=${encodeURIComponent(query)}`;
       } else if (category === "Popular") {
-        endpoint = `${API_BASE_URL}/movie/popular?api_key=${API_KEY}`;
+        endpoint = `/movie/popular`;
       } else if (category === "Premieres") {
-        endpoint = `${API_BASE_URL}/movie/upcoming?api_key=${API_KEY}`;
+        endpoint = `/movie/upcoming`;
       } else if (category === "Recently Added") {
-        endpoint = `${API_BASE_URL}/movie/now_playing?api_key=${API_KEY}`;
+        endpoint = `/movie/now_playing`;
       } else if (genre && genreMap[genre]) {
-        endpoint = `${API_BASE_URL}/discover/movie?with_genres=${genreMap[genre]}&sort_by=popularity.desc&api_key=${API_KEY}`;
+        endpoint = `/discover/movie?with_genres=${genreMap[genre]}&sort_by=popularity.desc`;
       } else {
-        endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc&api_key=${API_KEY}`;
+        endpoint = `/discover/movie?sort_by=popularity.desc`;
       }
 
-      const response = await fetch(endpoint);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.status_message || "Error Fetching the movies");
-      }
-      const data = await response.json();
-
+      const data = await fetchFromTMDB(endpoint);
       setMovieList(data.results || []);
 
       if (query && data.results.length > 0) {
-        await updateSearchCount(query, data.results[0]);
+        updateSearchCount(query, data.results[0]);
       }
     } catch (error) {
       console.error(`Error Fetching the movies: ${error}`);
@@ -78,38 +68,28 @@ const App = () => {
     }
   };
 
-  const loadTrendingMovies = async () => {
+  const loadInitialData = async () => {
     try {
-      const movies = await getTrendingMovies();
-      setTrendingMovies(movies);
-    } catch (error) {
-      console.log("Error fetching trending movies:", error);
-    }
-  };
-
-  const fetchNewestMovies = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/movie/now_playing?language=en-US&page=1&api_key=${API_KEY}`);
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        setNewestMovies(data.results.slice(0, 6)); // top 6 for slider
+      const [trending, newest] = await Promise.all([
+        getTrendingMovies(),
+        fetchFromTMDB('/movie/now_playing?language=en-US&page=1')
+      ]);
+      
+      setTrendingMovies(trending);
+      if (newest.results) {
+        setNewestMovies(newest.results.slice(0, 6));
       }
     } catch (error) {
-      console.log("Error fetching newest movies:", error);
+      console.error("Error fetching initial data:", error);
     }
   };
 
-  // This effect runs whenever the debouncedSearchTerm, selectedGenre or selectedCategory changes.
   useEffect(() => {
     fetchMovies(debouncedSearchTerm, selectedGenre, selectedCategory);
   }, [debouncedSearchTerm, selectedGenre, selectedCategory]);
 
   useEffect(() => {
-    loadTrendingMovies();
-  }, []);
-
-  useEffect(() => {
-    fetchNewestMovies();
+    loadInitialData();
   }, []);
 
   return (
@@ -132,22 +112,6 @@ const App = () => {
           </Link>
         </header>
 
-        <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
-        <Categories
-          selectedGenre={selectedGenre}
-          onGenreChange={(genre) => {
-            setSelectedGenre(genre);
-            setSelectedCategory("");
-            setSearchTerm("");
-          }}
-          selectedCategory={selectedCategory}
-          onCategoryChange={(category) => {
-            setSelectedCategory(category);
-            setSelectedGenre("");
-            setSearchTerm("");
-          }}
-        />
         {/* passing trending movie */}
         {trendingMovies.length > 0 && (
           <section className="trending">
@@ -164,6 +128,23 @@ const App = () => {
             </ul>
           </section>
         )}
+
+        <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+
+        <Categories
+          selectedGenre={selectedGenre}
+          onGenreChange={(genre) => {
+            setSelectedGenre(genre);
+            setSelectedCategory("");
+            setSearchTerm("");
+          }}
+          selectedCategory={selectedCategory}
+          onCategoryChange={(category) => {
+            setSelectedCategory(category);
+            setSelectedGenre("");
+            setSearchTerm("");
+          }}
+        />
 
         <section className="all-movies">
           {isLoading ? (

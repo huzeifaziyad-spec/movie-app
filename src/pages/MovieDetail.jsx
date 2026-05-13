@@ -4,8 +4,7 @@ import MovieCards from "../components/MovieCards";
 import Spinner from "../components/Spinner";
 import { addToWatchlist, removeFromWatchlist, checkIfInWatchlist } from "../appwrite";
 
-const API_BASE_URL = "https://api.themoviedb.org/3";
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+import { fetchFromTMDB } from "../lib/tmdb";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -16,49 +15,20 @@ const MovieDetail = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
 
   useEffect(() => {
-    const fetchMovieDetails = async () => {
+    const fetchAllDetails = async () => {
       setIsLoading(true);
-      if (!API_KEY) {
-        console.error("TMDB API Key is missing");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        // Fetch movie details
-        const res = await fetch(`${API_BASE_URL}/movie/${id}?language=en-US&api_key=${API_KEY}`);
+        const [movieData, castData, relatedData, watchlistStatus] = await Promise.all([
+          fetchFromTMDB(`/movie/${id}?language=en-US`),
+          fetchFromTMDB(`/movie/${id}/credits`),
+          fetchFromTMDB(`/movie/${id}/recommendations`),
+          checkIfInWatchlist(id)
+        ]);
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.status_message || "Failed to fetch movie details");
-        }
-
-        const data = await res.json();
-        setMovie(data);
-
-        // Fetch cast
-        const castRes = await fetch(`${API_BASE_URL}/movie/${id}/credits?api_key=${API_KEY}`);
-        const castData = await castRes.ok ? await castRes.json() : { cast: [] };
-        const topCast = (castData.cast || []).slice(0, 12);
-
-        const castWithCounts = await Promise.all(
-          topCast.map(async (actor) => {
-            try {
-              const actorRes = await fetch(`${API_BASE_URL}/person/${actor.id}/movie_credits?api_key=${API_KEY}`);
-              const actorData = await actorRes.json();
-              return { ...actor, movieCount: actorData.cast?.length || 0 };
-            } catch (err) {
-              return { ...actor, movieCount: 0 };
-            }
-          })
-        );
-
-        setCast(castWithCounts);
-
-        // Fetch related movies
-        const relatedRes = await fetch(`${API_BASE_URL}/movie/${id}/recommendations?api_key=${API_KEY}`);
-        const relatedData = await relatedRes.ok ? await relatedRes.json() : { results: [] };
+        setMovie(movieData);
+        setCast((castData.cast || []).slice(0, 12));
         setRelatedMovies(relatedData.results || []);
+        setIsInWatchlist(watchlistStatus);
       } catch (error) {
         console.error("Error fetching movie details:", error);
       } finally {
@@ -66,13 +36,7 @@ const MovieDetail = () => {
       }
     };
 
-    const checkWatchlistStatus = async () => {
-      const status = await checkIfInWatchlist(id);
-      setIsInWatchlist(status);
-    };
-
-    fetchMovieDetails();
-    checkWatchlistStatus();
+    fetchAllDetails();
     window.scrollTo(0, 0);
   }, [id]);
 

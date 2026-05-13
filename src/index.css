@@ -57,7 +57,7 @@ header img {
       }
 
       & li p {
-        @apply fancy-text opacity-50;
+        @apply fancy-text opacity-50 relative z-0;
       }
 
       & li img {
@@ -66,24 +66,6 @@ header img {
     }
   }
 
-  .search {
-    @apply w-full bg-white/5 backdrop-blur-xl border border-white/10 px-4 py-3 rounded-2xl mt-10 max-w-3xl mx-auto shadow-[0_0_30px_rgba(79,70,229,0.2)];
-
-    & div {
-      @apply relative flex items-center;
-    }
-
-    & img {
-      @apply absolute left-4 size-5 object-contain opacity-70;
-      width: 20px !important;
-      /* Force override of header img w-full */
-      height: 20px !important;
-    }
-
-    & input {
-      @apply w-full bg-transparent py-2 sm:pr-10 pl-12 text-lg text-white placeholder-gray-400 outline-hidden;
-    }
-  }
 
   .all-movies {
     @apply space-y-9;

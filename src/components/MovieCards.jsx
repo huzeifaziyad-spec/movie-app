@@ -4,17 +4,22 @@ import { addToWatchlist, removeFromWatchlist, checkIfInWatchlist } from "../appw
 
 const MovieCards = ({
   movie,
+  isFavorite
 }) => {
   const { id, title, poster_path, release_date, vote_average, original_language } = movie;
-  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(isFavorite ?? false);
 
   useEffect(() => {
+    if (isFavorite !== undefined) {
+      setIsInWatchlist(isFavorite);
+      return;
+    }
     const checkStatus = async () => {
       const status = await checkIfInWatchlist(id);
       setIsInWatchlist(status);
     };
     checkStatus();
-  }, [id]);
+  }, [id, isFavorite]);
 
   const toggleWatchlist = async (e) => {
     e.preventDefault();

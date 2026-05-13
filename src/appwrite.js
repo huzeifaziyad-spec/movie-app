@@ -72,14 +72,18 @@ export const getTrendingMovies = async () => {
 };
 
 // Authentication helper
+let cachedUserId = null;
 export const getUserId = async () => {
+  if (cachedUserId) return cachedUserId;
   try {
     const user = await account.get();
-    return user.$id;
+    cachedUserId = user.$id;
+    return cachedUserId;
   } catch (error) {
     try {
       const session = await account.createAnonymousSession();
-      return session.userId;
+      cachedUserId = session.userId;
+      return cachedUserId;
     } catch (sessionError) {
       console.error("Error creating anonymous session:", sessionError);
       return null;

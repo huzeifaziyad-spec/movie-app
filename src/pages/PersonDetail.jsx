@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import MovieCards from "../components/MovieCards";
 import Spinner from "../components/Spinner";
 
-const API_BASE_URL = "https://api.themoviedb.org/3";
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+import { fetchFromTMDB } from "../lib/tmdb";
 
 const PersonDetail = () => {
   const { id } = useParams();
@@ -16,41 +15,28 @@ const PersonDetail = () => {
   useEffect(() => {
     const fetchPersonData = async () => {
       try {
-        // Fetch person details
-        const personRes = await fetch(`${API_BASE_URL}/person/${id}?api_key=${API_KEY}`);
-        const personData = await personRes.json();
+        const [personData, creditsData, imagesData] = await Promise.all([
+          fetchFromTMDB(`/person/${id}`),
+          fetchFromTMDB(`/person/${id}/movie_credits`),
+          fetchFromTMDB(`/person/${id}/tagged_images`).catch(() => ({ results: [] }))
+        ]);
+
         setPerson(personData);
 
-        // Fetch movie credits
-        const creditsRes = await fetch(`${API_BASE_URL}/person/${id}/movie_credits?api_key=${API_KEY}`);
-        const creditsData = await creditsRes.json();
-
-        // Sort by popularity and filter out those without posters for a cleaner look
         const sortedMovies = (creditsData.cast || [])
           .sort((a, b) => b.popularity - a.popularity)
           .filter(movie => movie.poster_path);
 
         setMovies(sortedMovies);
 
-        // Fetch tagged images for backdrop
-        try {
-          const imagesRes = await fetch(`${API_BASE_URL}/person/${id}/tagged_images?api_key=${API_KEY}`);
-          const imagesData = await imagesRes.json();
-          const foundBackdrop = imagesData.results?.find(img => img.image_type === 'backdrop')?.file_path;
-
-          if (foundBackdrop) {
-            setBackdrop(foundBackdrop);
-          } else if (sortedMovies.length > 0) {
-            // Fallback: Use backdrop of their most popular movie
-            setBackdrop(sortedMovies[0].backdrop_path);
-          }
-        } catch (err) {
-          if (sortedMovies.length > 0) {
-            setBackdrop(sortedMovies[0].backdrop_path);
-          }
+        const foundBackdrop = imagesData.results?.find(img => img.image_type === 'backdrop')?.file_path;
+        if (foundBackdrop) {
+          setBackdrop(foundBackdrop);
+        } else if (sortedMovies.length > 0) {
+          setBackdrop(sortedMovies[0].backdrop_path);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching person data:", error);
       } finally {
         setIsLoading(false);
       }

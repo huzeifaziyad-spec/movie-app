@@ -64,6 +64,7 @@ const Watchlist = () => {
                       vote_average: movie.vote_average,
                       release_date: movie.release_date,
                     }}
+                    isFavorite={true}
                   />
                 </li>
               ))}

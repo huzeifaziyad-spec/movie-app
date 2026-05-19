@@ -1,7 +1,7 @@
 import React from 'react';
 
 const genres = [
-  "Action", "Adventure", "Animation", "Biography", "Crime", "Comedy", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Mystery", "Romance", "Science Fiction", "TV Movie", "Thriller", "War", "Western"
+  "Action", "Adventure", "Animation", "Biography", "Crime", "Comedy", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Mystery", "Romance", "Science Fiction", "TV Movie", "Thriller", "War", "Western"
 ];
 
 const Categories = ({ selectedGenre, onGenreChange, selectedCategory, onCategoryChange }) => {

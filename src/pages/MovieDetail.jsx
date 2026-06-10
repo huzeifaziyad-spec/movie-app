@@ -13,6 +13,7 @@ const MovieDetail = () => {
   const [relatedMovies, setRelatedMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [activeServer, setActiveServer] = useState("vidsrc_to");
 
   useEffect(() => {
     const fetchAllDetails = async () => {
@@ -176,10 +177,38 @@ const MovieDetail = () => {
 
       {/* Embedded Player Section */}
       <section id="player-section" className="mt-20 mb-20 max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center">Watch Now</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <h2 className="text-2xl font-bold">Watch Now</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Select Server:</span>
+            <select
+              value={activeServer}
+              onChange={(e) => setActiveServer(e.target.value)}
+              className="bg-gray-800 border border-white/10 text-white rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 cursor-pointer"
+            >
+              <option value="vidsrc_to">Server 1 (VidSrc.to)</option>
+              <option value="vidsrc_cc">Server 2 (VidSrc.cc)</option>
+              <option value="embed_su">Server 3 (Embed.su)</option>
+              <option value="vidsrc_pro">Server 4 (VidSrc.pro)</option>
+              <option value="vidsrc_me">Server 5 (VidSrc.me - Legacy)</option>
+            </select>
+          </div>
+        </div>
         <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/50">
           <iframe
-            src={`https://vidsrc.me/embed/movie?tmdb=${movie.id}`}
+            src={
+              activeServer === "vidsrc_to"
+                ? `https://vidsrc.to/embed/movie/${movie.imdb_id || movie.id}`
+                : activeServer === "vidsrc_cc"
+                ? `https://vidsrc.cc/v2/embed/movie/${movie.imdb_id || movie.id}`
+                : activeServer === "embed_su"
+                ? `https://embed.su/embed/movie/${movie.imdb_id || movie.id}`
+                : activeServer === "vidsrc_pro"
+                ? `https://vidsrc.pro/embed/movie/${movie.imdb_id || movie.id}`
+                : movie.imdb_id
+                ? `https://vidsrc.me/embed/movie?imdb=${movie.imdb_id}`
+                : `https://vidsrc.me/embed/movie?tmdb=${movie.id}`
+            }
             width="100%"
             height="100%"
             frameBorder="0"

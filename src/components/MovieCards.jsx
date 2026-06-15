@@ -4,9 +4,19 @@ import { addToWatchlist, removeFromWatchlist, checkIfInWatchlist } from "../appw
 
 const MovieCards = ({
   movie,
-  isFavorite
+  isFavorite,
+  mediaType
 }) => {
-  const { id, title, poster_path, release_date, vote_average, original_language } = movie;
+  const { id, title, name, poster_path, release_date, first_air_date, vote_average, original_language } = movie;
+
+  const isTv = mediaType === "tv" || movie.media_type === "tv" || String(id).startsWith("tv-") || first_air_date !== undefined || (name !== undefined && title === undefined);
+  const actualId = String(id).replace("tv-", "");
+  const watchlistId = isTv ? `tv-${actualId}` : actualId;
+  const linkPath = isTv ? `/tv/${actualId}` : `/movie/${actualId}`;
+
+  const displayTitle = title || name || "Untitled";
+  const displayDate = release_date || first_air_date || "";
+
   const [isInWatchlist, setIsInWatchlist] = useState(isFavorite ?? false);
 
   useEffect(() => {
@@ -15,11 +25,11 @@ const MovieCards = ({
       return;
     }
     const checkStatus = async () => {
-      const status = await checkIfInWatchlist(id);
+      const status = await checkIfInWatchlist(watchlistId);
       setIsInWatchlist(status);
     };
     checkStatus();
-  }, [id, isFavorite]);
+  }, [watchlistId, isFavorite]);
 
   const toggleWatchlist = async (e) => {
     e.preventDefault();
@@ -27,10 +37,18 @@ const MovieCards = ({
 
     try {
       if (isInWatchlist) {
-        await removeFromWatchlist(id);
+        await removeFromWatchlist(watchlistId);
         setIsInWatchlist(false);
       } else {
-        await addToWatchlist(movie);
+        // Normalize object to save to Appwrite
+        const mediaObj = {
+          id: watchlistId,
+          title: displayTitle,
+          poster_path,
+          vote_average,
+          release_date: displayDate
+        };
+        await addToWatchlist(mediaObj);
         setIsInWatchlist(true);
       }
     } catch (error) {
@@ -39,7 +57,7 @@ const MovieCards = ({
   };
 
   return (
-    <Link to={`/movie/${id}`}>
+    <Link to={linkPath}>
       <div className="movie-card transition-all duration-300 relative group">
         <div className="relative overflow-hidden rounded-xl">
           <img
@@ -48,7 +66,7 @@ const MovieCards = ({
                 ? `https://image.tmdb.org/t/p/w500${poster_path}`
                 : "/assets/no-poster.png"
             }
-            alt={title}
+            alt={displayTitle}
             className="group-hover:scale-105 transition-transform duration-500"
           />
 
@@ -72,13 +90,13 @@ const MovieCards = ({
           </button>
         </div>
 
-        <h3>{title}</h3>
+        <h3>{displayTitle}</h3>
         <div className="content">
           <div className="rating">
             <img src="/assets/star.svg" alt="Star" />
             <p>{vote_average ? vote_average.toFixed(1) : "N/A"}</p>
           </div>
-          <span>{release_date ? release_date.slice(0, 4) : "N/A"}</span>
+          <span>{displayDate ? displayDate.slice(0, 4) : "N/A"}</span>
           <span>{original_language ? original_language.toUpperCase() : "N/A"}</span>
         </div>
       </div>

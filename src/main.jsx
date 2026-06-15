@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MovieDetail from "./pages/MovieDetail";
 import PersonDetail from "./pages/PersonDetail";
 import Watchlist from "./pages/Watchlist";
+import TVDetail from "./pages/TVDetail";
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: "/movie/:id",
     element: <MovieDetail />,
+  },
+  {
+    path: "/tv/:id",
+    element: <TVDetail />,
   },
   {
     path: "/person/:id",

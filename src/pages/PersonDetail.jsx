@@ -17,7 +17,7 @@ const PersonDetail = () => {
       try {
         const [personData, creditsData, imagesData] = await Promise.all([
           fetchFromTMDB(`/person/${id}`),
-          fetchFromTMDB(`/person/${id}/movie_credits`),
+          fetchFromTMDB(`/person/${id}/combined_credits`),
           fetchFromTMDB(`/person/${id}/tagged_images`).catch(() => ({ results: [] }))
         ]);
 
@@ -120,7 +120,7 @@ const PersonDetail = () => {
           </ul>
           {movies.length === 0 && (
             <p className="text-gray-500 text-center py-20 bg-white/5 rounded-2xl border border-white/5">
-              No movies found for this person.
+              No movies or TV shows found for this person.
             </p>
           )}
         </section>

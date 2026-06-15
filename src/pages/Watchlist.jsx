@@ -54,20 +54,24 @@ const Watchlist = () => {
         ) : (
           <section className="all-movies pb-20">
             <ul>
-              {watchlist.map((movie) => (
-                <li key={movie.$id}>
-                  <MovieCards
-                    movie={{
-                      id: movie.movie_id,
-                      title: movie.title,
-                      poster_path: movie.poster_url?.replace("https://image.tmdb.org/t/p/w500", ""),
-                      vote_average: movie.vote_average,
-                      release_date: movie.release_date,
-                    }}
-                    isFavorite={true}
-                  />
-                </li>
-              ))}
+              {watchlist.map((movie) => {
+                const isTvShow = String(movie.movie_id).startsWith("tv-");
+                return (
+                  <li key={movie.$id}>
+                    <MovieCards
+                      movie={{
+                        id: movie.movie_id,
+                        title: movie.title,
+                        poster_path: movie.poster_url?.replace("https://image.tmdb.org/t/p/w500", ""),
+                        vote_average: movie.vote_average,
+                        release_date: movie.release_date,
+                      }}
+                      isFavorite={true}
+                      mediaType={isTvShow ? "tv" : "movie"}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
